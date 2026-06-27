@@ -2,7 +2,7 @@
    FoodieAI — Application Logic Orchestrator (app.js)
    ═══════════════════════════════════════════════════════════════════════ */
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   // --- DOM Elements ---
   const healthBadge = document.getElementById('health-badge');
   const locationToggle = document.getElementById('location-toggle');
@@ -40,32 +40,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   let availableCuisines = [];
   
   // --- 1. System Health Check & Dynamic Data Initialization ---
-  try {
-    const health = await window.FoodieApi.checkHealth();
-    if (health.status === 'healthy') {
-      healthBadge.innerHTML = `<span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span> AI Concierge Active`;
-      healthBadge.className = "hidden lg:flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full text-xs text-secondary-fixed font-medium";
-    }
-  } catch (err) {
-    console.warn("Backend degraded or unreachable:", err);
-    healthBadge.innerHTML = `<span class="material-symbols-outlined text-[16px] text-error">warning</span> Offline Mode`;
-    healthBadge.className = "hidden lg:flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full text-xs text-error font-medium";
-  }
+  // Run these asynchronously in the background so they do not block event listener binding
+  window.FoodieApi.checkHealth()
+    .then(health => {
+      if (health && health.status === 'healthy') {
+        healthBadge.innerHTML = `<span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span> AI Concierge Active`;
+        healthBadge.className = "hidden lg:flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full text-xs text-secondary-fixed font-medium";
+      }
+    })
+    .catch(err => {
+      console.warn("Backend degraded or unreachable:", err);
+      healthBadge.innerHTML = `<span class="material-symbols-outlined text-[16px] text-error">warning</span> Offline Mode`;
+      healthBadge.className = "hidden lg:flex items-center gap-2 px-3 py-1.5 glass-panel rounded-full text-xs text-error font-medium";
+    });
 
   // Load datasets to populate fields
-  try {
-    const [locations, cuisines] = await Promise.all([
-      window.FoodieApi.fetchLocations(),
-      window.FoodieApi.fetchCuisines()
-    ]);
-    availableLocations = locations;
-    availableCuisines = cuisines;
-    
-    // Initialize custom dropdown option nodes
-    populateLocationOptions(availableLocations);
-  } catch (err) {
-    console.error("Failed to fetch initial dropdown data:", err);
-  }
+  Promise.all([
+    window.FoodieApi.fetchLocations(),
+    window.FoodieApi.fetchCuisines()
+  ])
+    .then(([locations, cuisines]) => {
+      availableLocations = locations || [];
+      availableCuisines = cuisines || [];
+      
+      // Initialize custom dropdown option nodes
+      populateLocationOptions(availableLocations);
+    })
+    .catch(err => {
+      console.error("Failed to fetch initial dropdown data:", err);
+      if (locationOptions) {
+        locationOptions.innerHTML = `<div class="dropdown-empty text-error">Unable to retrieve locations from the API. Check your connection configs.</div>`;
+      }
+    });
 
   // --- 2. Custom Location Searchable Dropdown Logic ---
   locationToggle.addEventListener('click', (e) => {

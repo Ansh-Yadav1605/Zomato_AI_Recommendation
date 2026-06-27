@@ -13,6 +13,14 @@ if (queryApiUrl) {
   }
 }
 
+// Stale cache reset: clear outdated placeholder/example URLs from localStorage
+try {
+  const storedUrl = localStorage.getItem('foodieai_api_url');
+  if (storedUrl && (storedUrl.includes('zomato-ai-production') || storedUrl.includes('your-backend-service'))) {
+    localStorage.removeItem('foodieai_api_url');
+  }
+} catch (e) {}
+
 // Default production URL (points to your generated Railway domain)
 const DEFAULT_PROD_URL = 'https://web-production-91927.up.railway.app'; 
 const PROD_BACKEND_URL = localStorage.getItem('foodieai_api_url') || DEFAULT_PROD_URL;

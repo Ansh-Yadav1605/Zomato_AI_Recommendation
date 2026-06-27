@@ -77,22 +77,25 @@ def _is_rate_limited(client_ip: str) -> bool:
 async def load_dataset_in_background(app: FastAPI):
     """
     Asynchronously loads and preprocesses the Zomato dataset in the background
-    to allow the main server application process to start instantly and answer health checks.
+    using a thread executor to prevent blocking the main asyncio event loop.
     """
     try:
-        logger.info("Background: Loading dataset from Hugging Face…")
-        raw_df = load_dataset_from_hf(dataset_id=settings.DATASET_ID)
-
-        logger.info("Background: Preprocessing dataset…")
-        clean_df = preprocess(raw_df)
-
-        logger.info("Background: Building lookup indices…")
-        indices = build_indices(clean_df)
-
+        logger.info("Background: Loading dataset from Hugging Face (in thread executor)…")
+        loop = asyncio.get_running_loop()
+        
+        # Run synchronous blocking calls in the executor
+        raw_df = await loop.run_in_executor(None, load_dataset_from_hf, settings.DATASET_ID)
+ 
+        logger.info("Background: Preprocessing dataset (in thread executor)…")
+        clean_df = await loop.run_in_executor(None, preprocess, raw_df)
+ 
+        logger.info("Background: Building lookup indices (in thread executor)…")
+        indices = await loop.run_in_executor(None, build_indices, clean_df)
+ 
         # Store in app state for route handlers
         app.state.df = clean_df
         app.state.indices = indices
-
+ 
         logger.info(
             "✅ Background: Dataset ready: %d restaurants, %d locations, %d cuisine types.",
             len(clean_df),

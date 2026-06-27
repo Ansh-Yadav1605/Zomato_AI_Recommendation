@@ -2,10 +2,13 @@
    FoodieAI — API Client Module (api.js)
    ═══════════════════════════════════════════════════════════════════════ */
 
-// Base URL detection. Prefers same origin when served by FastAPI, fallbacks to localhost:8000
-const BASE_URL = window.location.origin.includes('localhost') 
-  ? window.location.origin 
-  : 'http://localhost:8000';
+// Production Railway Backend URL (Update this with your deployed Railway service URL)
+const PROD_BACKEND_URL = 'https://your-backend-service.up.railway.app'; 
+
+// Base URL detection: uses local server if running locally, otherwise points to Railway backend
+const BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000'
+  : PROD_BACKEND_URL;
 
 // Simple in-memory caches
 let cachedLocations = null;

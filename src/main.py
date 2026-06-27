@@ -14,6 +14,8 @@ import time
 from contextlib import asynccontextmanager
 from collections import defaultdict
 
+import pandas as pd
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -81,14 +83,34 @@ async def load_dataset_in_background(app: FastAPI):
     using a thread executor to prevent blocking the main asyncio event loop.
     """
     try:
-        logger.info("Background: Loading dataset from Hugging Face (in thread executor)…")
+        workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        clean_csv_path = os.path.join(workspace_dir, "data", "restaurants_clean.csv")
+        
         loop = asyncio.get_running_loop()
         
-        # Run synchronous blocking calls in the executor
-        raw_df = await loop.run_in_executor(None, load_dataset_from_hf, settings.DATASET_ID)
- 
-        logger.info("Background: Preprocessing dataset (in thread executor)…")
-        clean_df = await loop.run_in_executor(None, preprocess, raw_df)
+        if os.path.exists(clean_csv_path) and "pytest" not in sys.modules:
+            logger.info("Background: Loading pre-bundled clean dataset from %s", clean_csv_path)
+            def load_local():
+                df = pd.read_csv(clean_csv_path)
+                # Ensure correct types after loading from local CSV file
+                df["rating"] = df["rating"].astype(float)
+                df["average_cost"] = df["average_cost"].astype(float)
+                df["votes"] = df["votes"].astype(int)
+                df["online_order"] = df["online_order"].astype(bool)
+                df["book_table"] = df["book_table"].astype(bool)
+                # Handle NaNs in strings
+                str_cols = df.select_dtypes(include="object").columns
+                df[str_cols] = df[str_cols].fillna("")
+                return df
+                
+            clean_df = await loop.run_in_executor(None, load_local)
+        else:
+            logger.info("Background: Local clean dataset not found. Fetching from Hugging Face...")
+            # Run synchronous blocking calls in the executor
+            raw_df = await loop.run_in_executor(None, load_dataset_from_hf, settings.DATASET_ID)
+     
+            logger.info("Background: Preprocessing dataset (in thread executor)…")
+            clean_df = await loop.run_in_executor(None, preprocess, raw_df)
  
         logger.info("Background: Building lookup indices (in thread executor)…")
         indices = await loop.run_in_executor(None, build_indices, clean_df)
@@ -120,12 +142,15 @@ async def lifespan(app: FastAPI):
 
     # Define helper to delay the background load task
     async def delayed_load():
-        # If we are running unit tests (pytest), execute immediately to avoid test failures
-        if "pytest" in sys.modules:
+        workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        clean_csv_path = os.path.join(workspace_dir, "data", "restaurants_clean.csv")
+        
+        # If running tests or we have a local clean CSV, execute immediately (extremely fast & lightweight)
+        if "pytest" in sys.modules or os.path.exists(clean_csv_path):
             await load_dataset_in_background(app)
             return
 
-        # Wait 15 seconds after booting up to let the container settle and successfully pass Railway's startup checks
+        # Fallback delay (15 seconds) for remote downloads to prevent startup health check timeouts
         logger.info("Delaying background dataset load by 15 seconds to pass initial health checks...")
         await asyncio.sleep(15)
         await load_dataset_in_background(app)

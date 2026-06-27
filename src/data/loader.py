@@ -50,7 +50,35 @@ def load_dataset_from_hf(
 
     logger.info("Loading dataset '%s' (split=%s) …", dataset_id, split)
 
-    # Try downloading the CSV file directly from Hugging Face to optimize memory and speed
+    # 1. Try downloading pre-converted parquet files from Hugging Face (highly optimized for speed and memory)
+    try:
+        import requests
+        
+        parquet_api_url = f"https://huggingface.co/api/datasets/{dataset_id}/parquet"
+        logger.info("Attempting to query Hugging Face Parquet API: %s", parquet_api_url)
+        resp = requests.get(parquet_api_url, timeout=10)
+        if resp.status_code == 200:
+            parquet_data = resp.json()
+            train_urls = []
+            for config, splits in parquet_data.items():
+                if split in splits:
+                    train_urls = splits[split]
+                    break
+            
+            if train_urls:
+                logger.info("Found %d parquet chunks. Downloading and merging...", len(train_urls))
+                dfs = [pd.read_parquet(url) for url in train_urls]
+                df = pd.concat(dfs, ignore_index=True)
+                logger.info("Direct Parquet load successful.")
+                return df
+            else:
+                logger.warning("No Parquet files found for split '%s' in metadata.", split)
+        else:
+            logger.warning("Hugging Face Parquet API returned status: %d", resp.status_code)
+    except Exception as parquet_exc:
+        logger.warning("Direct Parquet load failed: %s. Trying direct CSV...", parquet_exc)
+
+    # 2. Try downloading the CSV file directly from Hugging Face to optimize memory and speed
     direct_url = f"https://huggingface.co/datasets/{dataset_id}/resolve/main/zomato.csv"
     logger.info("Attempting direct CSV download from %s", direct_url)
     try:

@@ -12,6 +12,8 @@ from typing import Optional
 
 import pandas as pd
 
+from src.data.preprocessor import RAW_TO_CLEAN
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +52,9 @@ def load_dataset_from_hf(
 
     logger.info("Loading dataset '%s' (split=%s) …", dataset_id, split)
 
+    # Clean subset of columns to load (excludes heavy unused fields like reviews_list)
+    cols_to_load = list(RAW_TO_CLEAN.keys())
+
     # 1. Try downloading pre-converted parquet files from Hugging Face (highly optimized for speed and memory)
     try:
         import requests
@@ -66,8 +71,9 @@ def load_dataset_from_hf(
                     break
             
             if train_urls:
-                logger.info("Found %d parquet chunks. Downloading and merging...", len(train_urls))
-                dfs = [pd.read_parquet(url) for url in train_urls]
+                logger.info("Found %d parquet chunks. Downloading, filtering columns, and merging...", len(train_urls))
+                # Only load required columns from Parquet files to prevent OOM memory spikes
+                dfs = [pd.read_parquet(url, columns=cols_to_load) for url in train_urls]
                 df = pd.concat(dfs, ignore_index=True)
                 logger.info("Direct Parquet load successful.")
                 return df
@@ -82,7 +88,8 @@ def load_dataset_from_hf(
     direct_url = f"https://huggingface.co/datasets/{dataset_id}/resolve/main/zomato.csv"
     logger.info("Attempting direct CSV download from %s", direct_url)
     try:
-        df = pd.read_csv(direct_url)
+        # Only parse the required columns to save memory and time
+        df = pd.read_csv(direct_url, usecols=cols_to_load)
         logger.info("Direct CSV download successful.")
     except Exception as direct_exc:
         logger.warning(

@@ -69,7 +69,15 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => {
       console.error("Failed to fetch initial dropdown data:", err);
       if (locationOptions) {
-        locationOptions.innerHTML = `<div class="dropdown-empty text-error">Unable to retrieve locations from the API. Check your connection configs.</div>`;
+        const attemptedUrl = window.FoodieApi?.BASE_URL || 'unknown';
+        locationOptions.innerHTML = `
+          <div class="dropdown-empty text-error text-center p-4">
+            <span class="material-symbols-outlined text-error text-[24px] mb-1">warning</span>
+            <div class="font-medium text-xs">Unable to load locations</div>
+            <div class="text-[9px] opacity-75 mt-1 break-all">API URL: ${attemptedUrl}</div>
+            <div class="text-[9px] text-error mt-0.5 font-mono">(${err.message || err})</div>
+          </div>
+        `;
       }
     });
 

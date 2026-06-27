@@ -156,6 +156,7 @@ async function fetchRecommendations(preferences) {
 
 // Export functions to global scope for other modules
 window.FoodieApi = {
+  BASE_URL,
   checkHealth,
   fetchLocations,
   fetchCuisines,

@@ -29,18 +29,22 @@ Railway is ideal for containerized or Python web applications, reading the `Proc
 
 ## 2. Configure the Frontend Domain
 
-Since the frontend is static HTML/JS, it needs to know where to send REST API requests.
+Since the frontend is static HTML/JS, it needs to know where to send REST API requests. You have two options to link your frontend to your deployed Railway backend:
 
-### Steps:
+### Option A: Via URL Query Parameter (Recommended — No Code Edits Required)
+Once your Vercel site is deployed (e.g. `https://foodie-ai.vercel.app`), simply visit the URL once with the `api_url` parameter pointing to your backend:
+```
+https://foodie-ai.vercel.app/?api_url=https://zomato-ai-production.up.railway.app
+```
+The application will automatically save this API endpoint in your browser's `localStorage` and connect to it for all future visits.
+
+### Option B: Hardcoding in the Code
 1. Open the file [frontend/js/api.js](file:///c:/Users/anshy/OneDrive/Desktop/Zomato%20Milestone/frontend/js/api.js).
-2. Locate line 6:
+2. Locate the placeholder default URL:
    ```javascript
-   const PROD_BACKEND_URL = 'https://your-backend-service.up.railway.app';
+   const DEFAULT_PROD_URL = 'https://your-backend-service.up.railway.app';
    ```
-3. Replace the placeholder URL with the copy of your **Railway Production Backend URL** from Step 8. For example:
-   ```javascript
-   const PROD_BACKEND_URL = 'https://zomato-ai-production.up.railway.app';
-   ```
+3. Replace it with your copy of the **Railway Production Backend URL**.
 4. Commit and push this change to your GitHub repository:
    ```powershell
    git add frontend/js/api.js

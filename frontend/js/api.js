@@ -2,8 +2,20 @@
    FoodieAI — API Client Module (api.js)
    ═══════════════════════════════════════════════════════════════════════ */
 
-// Production Railway Backend URL (Update this with your deployed Railway service URL)
-const PROD_BACKEND_URL = 'https://your-backend-service.up.railway.app'; 
+// Dynamic API URL configuration: parse URL query params (e.g. ?api_url=https://...) and store in localStorage
+const urlParams = new URLSearchParams(window.location.search);
+const queryApiUrl = urlParams.get('api_url');
+if (queryApiUrl) {
+  try {
+    localStorage.setItem('foodieai_api_url', queryApiUrl.replace(/\/$/, '')); // trim trailing slash
+  } catch (e) {
+    console.error("Failed to write api_url to localStorage:", e);
+  }
+}
+
+// Default production URL (update this or use the ?api_url query parameter on your Vercel deployment once)
+const DEFAULT_PROD_URL = 'https://your-backend-service.up.railway.app'; 
+const PROD_BACKEND_URL = localStorage.getItem('foodieai_api_url') || DEFAULT_PROD_URL;
 
 // Base URL detection: uses local server if running locally, otherwise points to Railway backend
 const BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')

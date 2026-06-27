@@ -1,0 +1,49 @@
+# ──────────────────────────────────────────────────
+# .gitignore — AI Restaurant Recommendation System
+# ──────────────────────────────────────────────────
+
+# ── Environment & Secrets ────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Python ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environments ────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── IDE & Editors ───────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing ─────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Hugging Face Cache ──────────────────────────
+.cache/
+*.parquet
+
+# ── Logs ────────────────────────────────────────
+*.log
+logs/
+
+# ── OS Files ────────────────────────────────────
+desktop.ini

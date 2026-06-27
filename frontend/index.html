@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>FoodieAI — Premium AI-Powered Restaurant Recommendation Concierge</title>
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <!-- CSS Stylesheets -->
+  <link href="/css/style.css" rel="stylesheet"/>
+  <link href="/css/animations.css" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <a class="nav-brand" href="#">
+        <span class="material-symbols-outlined nav-brand-icon">restaurant</span>
+        <span class="nav-brand-text">FoodieAI</span>
+      </a>
+      <nav class="nav-links">
+        <a class="nav-link active" href="#">Discover</a>
+        <a class="nav-link" href="#" onclick="alert('Favorites feature coming soon!')">Favorites</a>
+        <a class="nav-link" href="#" onclick="alert('Browse cuisines directly through search preferences below!')">Cuisines</a>
+      </nav>
+      <div class="nav-right">
+        <div class="ai-badge" id="health-badge">
+          <span class="material-symbols-outlined text-[16px] text-tertiary-fixed">auto_awesome</span>
+          AI Powered
+        </div>
+        <button class="nav-icon-btn" id="clear-search-btn-header" title="Reset Search">
+          <span class="material-symbols-outlined">refresh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container main-content">
+    
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-bg">
+        <canvas id="shader-canvas-ANIMATION_1" style="display:block; width:100%; height:100%; position:absolute; top:0; left:0; z-index:0; opacity:0.7;"></canvas>
+        <script>
+        (function() {
+          const canvas = document.getElementById('shader-canvas-ANIMATION_1');
+
+          function syncSize() {
+            const w = canvas.parentElement.clientWidth || 1280;
+            const h = canvas.parentElement.clientHeight || 400;
+            if (canvas.width !== w || canvas.height !== h) {
+              canvas.width  = w;
+              canvas.height = h;
+            }
+          }
+          if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(syncSize).observe(canvas.parentElement);
+          }
+          syncSize();
+
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return;
+          const vs = `attribute vec2 a_position;
+        varying vec2 v_texCoord;
+        void main() {
+          v_texCoord = a_position * 0.5 + 0.5;
+          gl_Position = vec4(a_position, 0.0, 1.0);
+        }`;
+          const fs = `precision highp float;
+        varying vec2 v_texCoord;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+
+        void main() {
+            vec2 uv = v_texCoord;
+            float t = u_time * 0.2;
+            
+            vec3 color1 = vec3(0.059, 0.059, 0.102); // #0f0f1a
+            vec3 color2 = vec3(0.102, 0.102, 0.180); // #1a1a2e
+            vec3 color3 = vec3(0.15, 0.08, 0.12);    // Deep purple/coral tint
+            
+            float noise = sin(uv.x * 3.0 + t) * cos(uv.y * 2.0 - t * 0.5);
+            noise += sin(uv.y * 4.0 + t * 0.8) * 0.5;
+            
+            vec3 finalColor = mix(color1, color2, uv.y + noise * 0.1);
+            finalColor = mix(finalColor, color3, clamp(noise * 0.2, 0.0, 1.0));
+            
+            float shimmer = pow(fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453), 20.0);
+            finalColor += shimmer * 0.02;
+
+            gl_FragColor = vec4(finalColor, 1.0);
+        }`;
+          function cs(type, src) {
+            const s = gl.createShader(type);
+            gl.shaderSource(s, src);
+            gl.compileShader(s);
+            return s;
+          }
+          const prog = gl.createProgram();
+          gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+          gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+          gl.linkProgram(prog);
+          gl.useProgram(prog);
+          const buf = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+          const pos = gl.getAttribLocation(prog, 'a_position');
+          gl.enableVertexAttribArray(pos);
+          gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+          const uTime = gl.getUniformLocation(prog, 'u_time');
+          const uRes = gl.getUniformLocation(prog, 'u_resolution');
+
+          function render(t) {
+            syncSize();
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            if (uTime) gl.uniform1f(uTime, t * 0.001);
+            if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            requestAnimationFrame(render);
+          }
+          render(0);
+        })();
+        </script>
+      </div>
+      <div class="hero-content">
+        <div class="hero-chip">
+          <span class="material-symbols-outlined">temp_preferences_custom</span>
+          AI-Powered Gastronomy Concierge
+        </div>
+        <h1 class="text-display-lg text-gradient animate-fade-in-up stagger-1">Discover Your Perfect Meal</h1>
+        <p class="text-body-lg hero-subtitle animate-fade-in-up stagger-2">
+          Tailored restaurant recommendations powered by intelligence. Skip the standard scrolls and let our culinary engine curate your next unforgettable dining experience.
+        </p>
+      </div>
+    </section>
+
+    <!-- Preference Input Form Section -->
+    <section class="form-section glass-panel-heavy animate-fade-in-up stagger-3">
+      <h2 class="text-headline-md form-header">
+        <span class="material-symbols-outlined">tune</span>
+        Refine Your Craving
+      </h2>
+      <form class="form-grid">
+        
+        <!-- Location Picker (Searchable Autocomplete Dropdown) -->
+        <div class="form-group form-col-4">
+          <label class="form-label" for="location-toggle">
+            <span class="material-symbols-outlined">location_on</span> Location
+          </label>
+          <div class="input-wrapper custom-dropdown" id="location-dropdown">
+            <button class="dropdown-toggle" id="location-toggle" type="button">
+              <span id="selected-location-text">Select location</span>
+              <span class="material-symbols-outlined icon-right">expand_more</span>
+            </button>
+            <span class="material-symbols-outlined icon-left">my_location</span>
+            
+            <div class="dropdown-menu" id="location-menu">
+              <input class="dropdown-search" id="location-search" placeholder="Search locations..." type="text"/>
+              <div id="location-options">
+                <div class="dropdown-empty">Loading locations...</div>
+              </div>
+            </div>
+          </div>
+          <span class="validation-error" id="location-validation-error">Please select a location from the dropdown.</span>
+        </div>
+
+        <!-- Cuisine Autocomplete -->
+        <div class="form-group form-col-4">
+          <label class="form-label" for="cuisine-input">
+            <span class="material-symbols-outlined">restaurant_menu</span> Cuisine
+          </label>
+          <div class="input-wrapper autocomplete-wrapper">
+            <input class="form-input" id="cuisine-input" placeholder="e.g. Italian, North Indian, Continental" type="text"/>
+            <span class="material-symbols-outlined icon-left">search</span>
+            <div class="autocomplete-menu" id="cuisine-menu"></div>
+          </div>
+        </div>
+
+        <!-- Budget Selection Buttons -->
+        <div class="form-group form-col-4">
+          <label class="form-label">
+            <span class="material-symbols-outlined">payments</span> Budget for Two
+          </label>
+          <div class="budget-group">
+            <button class="budget-btn" data-budget="low" type="button">
+              ₹
+              <span class="budget-tooltip">Low (Under ₹500)</span>
+            </button>
+            <button class="budget-btn active" data-budget="medium" type="button">
+              ₹₹
+              <span class="budget-tooltip">Medium (₹500 - ₹1500)</span>
+            </button>
+            <button class="budget-btn" data-budget="high" type="button">
+              ₹₹₹
+              <span class="budget-tooltip">High (₹1500+)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Minimum Rating Slider -->
+        <div class="form-group form-col-6">
+          <div class="rating-header">
+            <label class="form-label" for="rating-slider">
+              <span class="material-symbols-outlined">star</span> Minimum Rating
+            </label>
+            <span class="rating-value" id="rating-value">3.0+</span>
+          </div>
+          <div class="slider-container">
+            <input class="rating-slider" id="rating-slider" max="5.0" min="3.0" step="0.1" type="range" value="3.0"/>
+            <div class="star-track" id="rating-stars-track">
+              <span class="material-symbols-outlined">star</span>
+              <span class="material-symbols-outlined">star</span>
+              <span class="material-symbols-outlined">star</span>
+              <span class="material-symbols-outlined">star</span>
+              <span class="material-symbols-outlined">star</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specific Preferences Text Area -->
+        <div class="form-group form-col-6">
+          <div class="rating-header">
+            <label class="form-label" for="preferences-text">
+              <span class="material-symbols-outlined">edit_note</span> Specific Vibe or Requests
+            </label>
+            <span class="char-counter" id="char-counter">0 / 500</span>
+          </div>
+          <textarea class="form-textarea" id="preferences-text" maxlength="500" placeholder="e.g. rooftop seating, quiet romantic ambiance, good wine selection..." rows="2"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-col-12 cta-wrapper">
+          <button class="btn-primary animate-pulse-glow" id="submit-btn" type="submit">
+            <span class="material-symbols-outlined" id="submit-btn-icon">auto_awesome</span>
+            <span id="submit-btn-text">Get Recommendations</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Results Display Area -->
+    <section class="results-section hidden" id="results-container">
+      
+      <!-- Stats Metadata Panel -->
+      <div class="metadata-bar glass-panel animate-fade-in-up" id="metadata-container">
+        <!-- Filled dynamically -->
+      </div>
+      
+      <!-- Recommendations Output Wrapper -->
+      <div id="results-area">
+        <!-- Filled dynamically (featured card and grid layout) -->
+      </div>
+      
+      <!-- Search Reset Action -->
+      <div style="display: flex; justify-content: center; margin-top: var(--space-7);">
+        <button class="btn-secondary" id="new-search-btn">
+          <span class="material-symbols-outlined">refresh</span> Search Again
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">FoodieAI</div>
+      <p class="footer-copy">© 2026 FoodieAI Concierge. All rights reserved.</p>
+      <div class="footer-links">
+        <a class="footer-link" href="#" onclick="alert('Privacy Policy stub')">Privacy Policy</a>
+        <a class="footer-link" href="#" onclick="alert('Terms of Service stub')">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Application Logic Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/components.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

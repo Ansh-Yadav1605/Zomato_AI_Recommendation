@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   FoodieAI — Animations & Micro-interactions (animations.css)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ──────────────────────────────────────────────────────── */
+
+/* Staggered Entrance */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Skeleton Shimmer Wave */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Primary Button Pulse Glow */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.35);
+  }
+  50% {
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6), 0 0 15px rgba(255, 107, 53, 0.3);
+  }
+}
+
+/* Floating Elements (Hero / Icons) */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Loading Dots Pulse */
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Star Sparkle Transition */
+@keyframes starSparkle {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 var(--tertiary));
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 8px var(--accent-amber));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 var(--tertiary));
+  }
+}
+
+/* Form Shake (on error validation) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+
+/* ── Animation Classes ──────────────────────────────────────────────── */
+
+.animate-fade-in-up {
+  animation: fadeInUp var(--transition-slow) forwards;
+  opacity: 0; /* Prevents flash of unstyled content before animation starts */
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake 400ms ease-in-out;
+}
+
+/* Stagger Delay Classes */
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
+.stagger-5 { animation-delay: 500ms; }
+.stagger-6 { animation-delay: 600ms; }
+
+/* Skeleton Loader Shimmer */
+.shimmer-bg {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    rgba(255, 255, 255, 0.03) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Dot Loading Indicators */
+.loading-dot:nth-child(1) { animation: dotPulse 1.2s infinite 0ms; }
+.loading-dot:nth-child(2) { animation: dotPulse 1.2s infinite 200ms; }
+.loading-dot:nth-child(3) { animation: dotPulse 1.2s infinite 400ms; }
+
+/* Micro-hover transitions for cards and glass panels */
+.hover-glow-card {
+  transition: transform 0.4s var(--ease-spring), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-glow-card:hover {
+  transform: translateY(-6px) scale(1.015);
+  border-color: rgba(255, 181, 157, 0.25); /* Primary glow tint */
+  box-shadow: 0 12px 30px rgba(5, 5, 10, 0.5), 0 0 15px rgba(255, 181, 157, 0.1);
+}
+
+/* Micro-interaction on star sliders */
+.star-glow-active {
+  animation: starSparkle 800ms var(--ease-spring) infinite;
+}

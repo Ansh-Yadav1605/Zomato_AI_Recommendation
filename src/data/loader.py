@@ -58,10 +58,13 @@ def load_dataset_from_hf(
     # 1. Try downloading pre-converted parquet files from Hugging Face (highly optimized for speed and memory)
     try:
         import requests
+        import io
         
         parquet_api_url = f"https://huggingface.co/api/datasets/{dataset_id}/parquet"
         logger.info("Attempting to query Hugging Face Parquet API: %s", parquet_api_url)
-        resp = requests.get(parquet_api_url, timeout=10)
+        
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        resp = requests.get(parquet_api_url, headers=headers, timeout=10)
         if resp.status_code == 200:
             parquet_data = resp.json()
             train_urls = []
@@ -71,9 +74,13 @@ def load_dataset_from_hf(
                     break
             
             if train_urls:
-                logger.info("Found %d parquet chunks. Downloading, filtering columns, and merging...", len(train_urls))
-                # Only load required columns from Parquet files to prevent OOM memory spikes
-                dfs = [pd.read_parquet(url, columns=cols_to_load) for url in train_urls]
+                logger.info("Found %d parquet chunks. Downloading, filtering columns, and merging in-memory...", len(train_urls))
+                dfs = []
+                for url in train_urls:
+                    chunk_resp = requests.get(url, headers=headers, timeout=20)
+                    chunk_resp.raise_for_status()
+                    chunk_df = pd.read_parquet(io.BytesIO(chunk_resp.content), columns=cols_to_load)
+                    dfs.append(chunk_df)
                 df = pd.concat(dfs, ignore_index=True)
                 logger.info("Direct Parquet load successful.")
                 return df

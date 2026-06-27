@@ -9,6 +9,7 @@ lifespan events, registers API routes, and configures middleware
 import asyncio
 import logging
 import os
+import sys
 import time
 from contextlib import asynccontextmanager
 from collections import defaultdict
@@ -109,7 +110,7 @@ async def load_dataset_in_background(app: FastAPI):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Starts dataset load task in the background and releases the startup sequence immediately.
+    Starts dataset load task in the background with a delay and releases the startup sequence immediately.
     """
     logger.info("🚀 Starting AI Restaurant Recommendation Service…")
 
@@ -117,8 +118,20 @@ async def lifespan(app: FastAPI):
     app.state.df = None
     app.state.indices = None
 
+    # Define helper to delay the background load task
+    async def delayed_load():
+        # If we are running unit tests (pytest), execute immediately to avoid test failures
+        if "pytest" in sys.modules:
+            await load_dataset_in_background(app)
+            return
+
+        # Wait 15 seconds after booting up to let the container settle and successfully pass Railway's startup checks
+        logger.info("Delaying background dataset load by 15 seconds to pass initial health checks...")
+        await asyncio.sleep(15)
+        await load_dataset_in_background(app)
+
     # Spawn background task to prevent blocking Uvicorn port binding and health check pings
-    asyncio.create_task(load_dataset_in_background(app))
+    asyncio.create_task(delayed_load())
 
     yield
 

@@ -50,25 +50,35 @@ def load_dataset_from_hf(
 
     logger.info("Loading dataset '%s' (split=%s) …", dataset_id, split)
 
+    # Try downloading the CSV file directly from Hugging Face to optimize memory and speed
+    direct_url = f"https://huggingface.co/datasets/{dataset_id}/resolve/main/zomato.csv"
+    logger.info("Attempting direct CSV download from %s", direct_url)
     try:
-        # pyrefly: ignore [missing-import]
-        from datasets import load_dataset as hf_load_dataset
-
-        ds = hf_load_dataset(
-            dataset_id,
-            split=split,
-            cache_dir=str(cache_dir),
-            trust_remote_code=False,
+        df = pd.read_csv(direct_url)
+        logger.info("Direct CSV download successful.")
+    except Exception as direct_exc:
+        logger.warning(
+            "Direct CSV download failed: %s. Falling back to 'datasets' library.", 
+            direct_exc
         )
-    except Exception as exc:
-        logger.error("Failed to load dataset from Hugging Face: %s", exc)
-        raise ConnectionError(
-            f"Could not load dataset '{dataset_id}' from Hugging Face. "
-            f"Check your internet connection or verify the dataset ID. "
-            f"Original error: {exc}"
-        ) from exc
+        try:
+            # Fallback to datasets library
+            from datasets import load_dataset as hf_load_dataset
 
-    df = ds.to_pandas()
+            ds = hf_load_dataset(
+                dataset_id,
+                split=split,
+                cache_dir=str(cache_dir),
+                trust_remote_code=False,
+            )
+            df = ds.to_pandas()
+        except Exception as exc:
+            logger.error("Failed to load dataset from Hugging Face fallback: %s", exc)
+            raise ConnectionError(
+                f"Could not load dataset '{dataset_id}' from Hugging Face. "
+                f"Check your internet connection or verify the dataset ID. "
+                f"Original error: {exc}"
+            ) from exc
 
     if df.empty:
         raise ValueError(

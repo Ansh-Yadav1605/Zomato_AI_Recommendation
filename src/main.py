@@ -6,6 +6,7 @@ lifespan events, registers API routes, and configures middleware
 (CORS, error handling, rate limiting, structured logging).
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -73,26 +74,19 @@ def _is_rate_limited(client_ip: str) -> bool:
 # ═══════════════════════════════════════════════════════════════════════
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+async def load_dataset_in_background(app: FastAPI):
     """
-    Load and preprocess the Zomato dataset when the app starts,
-    and clean up on shutdown.
+    Asynchronously loads and preprocesses the Zomato dataset in the background
+    to allow the main server application process to start instantly and answer health checks.
     """
-    logger.info("🚀 Starting AI Restaurant Recommendation Service…")
-
-    # Initialise app state
-    app.state.df = None
-    app.state.indices = None
-
     try:
-        logger.info("Loading dataset from Hugging Face…")
+        logger.info("Background: Loading dataset from Hugging Face…")
         raw_df = load_dataset_from_hf(dataset_id=settings.DATASET_ID)
 
-        logger.info("Preprocessing dataset…")
+        logger.info("Background: Preprocessing dataset…")
         clean_df = preprocess(raw_df)
 
-        logger.info("Building lookup indices…")
+        logger.info("Background: Building lookup indices…")
         indices = build_indices(clean_df)
 
         # Store in app state for route handlers
@@ -100,17 +94,28 @@ async def lifespan(app: FastAPI):
         app.state.indices = indices
 
         logger.info(
-            "✅ Dataset ready: %d restaurants, %d locations, %d cuisine types.",
+            "✅ Background: Dataset ready: %d restaurants, %d locations, %d cuisine types.",
             len(clean_df),
             len(indices.get("locations", [])),
             len(indices.get("cuisines", [])),
         )
     except Exception as exc:
-        logger.error("❌ Failed to load dataset: %s", exc, exc_info=True)
-        logger.warning(
-            "Server will start in degraded mode. "
-            "API endpoints that require data will return 503."
-        )
+        logger.error("❌ Background: Failed to load dataset: %s", exc, exc_info=True)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Starts dataset load task in the background and releases the startup sequence immediately.
+    """
+    logger.info("🚀 Starting AI Restaurant Recommendation Service…")
+
+    # Initialise app state
+    app.state.df = None
+    app.state.indices = None
+
+    # Spawn background task to prevent blocking Uvicorn port binding and health check pings
+    asyncio.create_task(load_dataset_in_background(app))
 
     yield
 

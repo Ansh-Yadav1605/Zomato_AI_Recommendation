@@ -13,8 +13,8 @@ if (queryApiUrl) {
   }
 }
 
-// Default production URL (update this or use the ?api_url query parameter on your Vercel deployment once)
-const DEFAULT_PROD_URL = 'https://your-backend-service.up.railway.app'; 
+// Default production URL (points to your generated Railway domain)
+const DEFAULT_PROD_URL = 'https://web-production-91927.up.railway.app'; 
 const PROD_BACKEND_URL = localStorage.getItem('foodieai_api_url') || DEFAULT_PROD_URL;
 
 // Base URL detection: uses local server if running locally, otherwise points to Railway backend

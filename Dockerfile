@@ -14,5 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Explicitly expose port 8080 as a hint for Railway's proxy
-# Railway proxy automatically routes to $PORT. Do not hardcode EXPOSE.
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Explicitly tell Railway to route traffic to 8080
+EXPOSE 8080
+
+# Hardcode Uvicorn to bind to 8080, intentionally ignoring Railway's $PORT env var
+# This fixes the issue where the public domain is permanently glued to port 8080
+CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port 8080"]

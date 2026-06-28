@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8080
 
 # Use standard uvicorn runner, defaulting to 8080 if PORT isn't passed
-CMD uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8080}
+CMD uvicorn src.main:app --host :: --port ${PORT:-8080}

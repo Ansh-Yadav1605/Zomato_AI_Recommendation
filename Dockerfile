@@ -19,4 +19,4 @@ EXPOSE 8000
 
 # Force --loop asyncio --http h11 to prevent uvloop/httptools silent crashes on Railway Linux
 # Hardcode port 8000 to perfectly match the EXPOSE directive above
-CMD ["sh", "-c", "uvicorn src.main:app --host :: --port 8000 --loop asyncio --http h11"]
+CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port 8000 --loop asyncio --http h11"]

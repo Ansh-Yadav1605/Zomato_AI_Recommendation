@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Explicitly expose port 8080 as a hint for Railway's proxy
-# Railway proxy automatically routes to $PORT. Do not hardcode EXPOSE.
+# Explicitly expose port 8000 to tell Railway proxy to route traffic here
+EXPOSE 8000
+
 # Force --loop asyncio --http h11 to prevent uvloop/httptools silent crashes on Railway Linux
-CMD ["sh", "-c", "uvicorn src.main:app --host :: --port ${PORT:-8000} --loop asyncio --http h11"]
+# Hardcode port 8000 to perfectly match the EXPOSE directive above
+CMD ["sh", "-c", "uvicorn src.main:app --host :: --port 8000 --loop asyncio --http h11"]

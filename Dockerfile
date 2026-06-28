@@ -14,7 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Explicitly expose port 8080 as a hint for Railway's proxy
-EXPOSE 8080
-
-# Use standard uvicorn runner, defaulting to 8080 if PORT isn't passed
-CMD uvicorn src.main:app --host :: --port ${PORT:-8080}
+# Railway proxy automatically routes to $PORT. Do not hardcode EXPOSE.
+CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

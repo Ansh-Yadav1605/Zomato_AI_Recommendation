@@ -16,4 +16,4 @@ COPY . .
 # Explicitly expose port 8080 as a hint for Railway's proxy
 # Railway proxy automatically routes to $PORT. Do not hardcode EXPOSE.
 # Force --loop asyncio --http h11 to prevent uvloop/httptools silent crashes on Railway Linux
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000} --loop asyncio --http h11"]
+CMD ["sh", "-c", "uvicorn src.main:app --host :: --port ${PORT:-8000} --loop asyncio --http h11"]
